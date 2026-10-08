@@ -1,0 +1,11 @@
+@model IReadOnlyList<string>
+@{
+    var selectedTable = ViewContext.HttpContext.Request.Query["tableName"].ToString();
+}
+<nav class="table-tabs" aria-label="ERP tabloları">
+    @foreach (var tableName in Model)
+    {
+        var active = string.Equals(selectedTable, tableName, StringComparison.OrdinalIgnoreCase);
+        <a class="table-tab @(active ? "active" : "")" aria-current="@(active ? "page" : null)" asp-controller="Tables" asp-action="Open" asp-route-tableName="@tableName">@tableName</a>
+    }
+</nav>

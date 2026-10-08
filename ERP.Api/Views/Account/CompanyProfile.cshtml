@@ -1,0 +1,58 @@
+@model ERP.Api.Models.CompanyProfileViewModel
+@{
+    ViewData["Title"] = "Şirket ve fabrika profili";
+}
+
+<main class="company-profile-page">
+    <a class="back-link" asp-controller="Account" asp-action="Settings">← Ayarlara dön</a>
+    <div class="company-profile-heading">
+        <div>
+            <p class="settings-eyebrow">ŞİRKET BİLGİLERİ</p>
+            <h1>Şirket ve fabrika profili</h1>
+            <p class="form-intro">Uygulamada kayıtlı şirket ve üretim tesisi bilgileri.</p>
+        </div>
+        <a class="profile-edit-button" asp-controller="Account" asp-action="EditCompanyProfile">@(Model.Exists ? "Profili düzenle" : "Profil oluştur")</a>
+    </div>
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="success-message">@success</div>
+    }
+
+    @if (!Model.Exists)
+    {
+        <div class="profile-empty-state">
+            <h2>Henüz profil kaydedilmedi</h2>
+            <p>Şirket ve fabrika bilgilerini ekleyerek profili oluşturabilirsiniz.</p>
+        </div>
+    }
+    else
+    {
+        <section class="profile-details-section">
+            <h2>Şirket</h2>
+            <dl class="profile-details-grid">
+                <div><dt>Şirket adı</dt><dd>@Display(Model.CompanyName)</dd></div>
+                <div><dt>Vergi numarası</dt><dd>@Display(Model.TaxNumber)</dd></div>
+                <div><dt>Vergi dairesi</dt><dd>@Display(Model.TaxOffice)</dd></div>
+                <div><dt>Telefon</dt><dd>@Display(Model.Phone)</dd></div>
+                <div><dt>E-posta</dt><dd>@Display(Model.Email)</dd></div>
+                <div class="profile-detail-wide"><dt>Şirket adresi</dt><dd>@Display(Model.CompanyAddress)</dd></div>
+            </dl>
+        </section>
+        <section class="profile-details-section">
+            <h2>Üretim tesisi</h2>
+            <dl class="profile-details-grid">
+                <div><dt>Fabrika adı</dt><dd>@Display(Model.FactoryName)</dd></div>
+                <div class="profile-detail-wide"><dt>Fabrika adresi</dt><dd>@Display(Model.FactoryAddress)</dd></div>
+            </dl>
+        </section>
+        @if (Model.UpdatedAt.HasValue)
+        {
+            <p class="profile-updated">Son güncelleme: @Model.UpdatedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
+        }
+    }
+</main>
+
+@functions {
+    private static string Display(string? value) => string.IsNullOrWhiteSpace(value) ? "Belirtilmedi" : value;
+}

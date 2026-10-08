@@ -1,0 +1,74 @@
+@model StockPageViewModel
+@{
+    ViewData["Title"] = "STOK";
+}
+<section class="stock-page">
+    <div class="stock-heading">
+        <div>
+            <p class="admin-eyebrow">ENVANTER</p>
+            <h1>Stok</h1>
+            <p class="form-intro">Ürün miktarlarını depolara göre takip edin.</p>
+        </div>
+        @if (Model.CanWrite)
+        {
+            <a class="stock-add-link" href="#new-stock-item">+ Ürün ekle</a>
+        }
+    </div>
+
+    @if (Model.CanWrite)
+    {
+        <form id="new-stock-item" asp-controller="Tables" asp-action="AddStockItem" method="post" class="stock-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            <div class="field-grid stock-fields">
+                <div class="field"><label asp-for="ProductName">Ürün adı</label><input asp-for="ProductName" placeholder="Örn. Ürün A" maxlength="150" /><span asp-validation-for="ProductName" class="field-error"></span></div>
+                <div class="field"><label asp-for="ProductType">Ürün cinsi</label><select asp-for="ProductType" id="stock-product-type"><option>Hammadde</option><option>Mamul</option></select><span asp-validation-for="ProductType" class="field-error"></span></div>
+                <div class="field"><label asp-for="Quantity">Miktar</label><input asp-for="Quantity" type="number" min="0.001" step="0.001" placeholder="0" /><span asp-validation-for="Quantity" class="field-error"></span></div>
+                <div class="field"><label asp-for="MinimumQuantity">Düşük stok eşiği</label><input asp-for="MinimumQuantity" type="number" min="0" step="0.001" placeholder="0 = uyarı kapalı" /><span asp-validation-for="MinimumQuantity" class="field-error"></span></div>
+                <div class="field"><label asp-for="Unit">Stok birimi</label><select asp-for="Unit" id="stock-unit"><option>Adet</option><option>Kg</option><option>Metre</option><option>Litre</option></select></div>
+                <div class="field"><label asp-for="Warehouse">Depo</label><select asp-for="Warehouse"><option>Depo 1</option><option>Depo 2</option><option>Depo 3</option></select></div>
+                <div class="field"><label asp-for="PackagingRecipeId">Ambalaj reçetesi</label><select asp-for="PackagingRecipeId" id="stock-recipe"><option value="">Reçete seçmeyin</option>@foreach (var recipe in Model.AvailableRecipes){<option value="@recipe.Id">@recipe.RecipeName (@recipe.QuantityPerPallet @recipe.Unit / palet)</option>}</select><span asp-validation-for="PackagingRecipeId" class="field-error"></span></div>
+            </div>
+            <button class="primary-button stock-save" type="submit">Stok kaydet</button>
+        </form>
+    }
+
+    @if (Model.CanRead)
+    {
+        <div class="stock-table-wrap">
+            <table class="stock-table">
+                <thead><tr><th>Ürün adı</th><th>Ürün cinsi</th><th>Miktar</th><th>Depo</th><th>Ambalaj reçetesi</th><th>Düşük stok eşiği</th></tr></thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr><td colspan="6" class="stock-empty">Henüz stok kaydı yok.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr><td class="stock-product">@item.ProductName</td><td>@item.ProductType</td><td>@item.Quantity.ToString("0.###") @item.Unit</td><td><span class="warehouse-badge">@item.Warehouse</span></td><td>@(item.PackagingRecipeName ?? "—")</td><td><form asp-controller="Tables" asp-action="UpdateMinimumQuantity" method="post" class="threshold-form"><input type="hidden" name="stockItemId" value="@item.Id" /><input name="minimumQuantity" type="number" min="0" step="0.001" value="@item.MinimumQuantity.ToString(System.Globalization.CultureInfo.InvariantCulture)" aria-label="@item.ProductName düşük stok eşiği" /><button type="submit">Kaydet</button></form></td></tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+@section Scripts {
+    <script>
+        const productType = document.getElementById('stock-product-type');
+        const unit = document.getElementById('stock-unit');
+        const recipe = document.getElementById('stock-recipe');
+        if (productType && unit && recipe) {
+            async function loadRecipes() {
+                const response = await fetch(`/Tables/PackagingOptions?productType=${encodeURIComponent(productType.value)}&unit=${encodeURIComponent(unit.value)}`);
+                if (!response.ok) return;
+                const recipes = await response.json();
+                recipe.replaceChildren(new Option('Reçete seçmeyin', ''));
+                for (const item of recipes) recipe.add(new Option(`${item.recipeName} (${item.quantityPerPallet} ${item.unit} / palet)`, item.id));
+            }
+            productType.addEventListener('change', loadRecipes);
+            unit.addEventListener('change', loadRecipes);
+        }
+    </script>
+}

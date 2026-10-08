@@ -1,0 +1,160 @@
+@model SalePageViewModel
+@{
+    ViewData["Title"] = "Satış";
+}
+
+<section class="stock-page sales-page">
+    <div class="stock-heading">
+        <div>
+            <p class="admin-eyebrow">SATIŞ VE SEVKİYAT</p>
+            <h1>Satış</h1>
+            <p class="form-intro">Satışı müşteriye ve sevkiyata bağlayın. Kayıt sırasında seçilen depodaki miktar otomatik düşer.</p>
+        </div>
+    </div>
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="success-message sales-success">@success</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <p class="transfer-message error-message">@Model.Message</p>
+    }
+
+    @if (Model.CanWrite)
+    {
+        <form asp-controller="Tables" asp-action="RecordSale" method="post" class="stock-form sales-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            @if (Model.Customers.Count == 0)
+            {
+                <p class="sales-empty-hint">Satış girmek için önce Müşteriler sekmesinden en az bir aktif müşteri ekleyin.</p>
+            }
+            else if (Model.StockItems.Count == 0)
+            {
+                <p class="sales-empty-hint">Satış girmek için STOK sekmesinde miktarı bulunan bir ürün olmalı.</p>
+            }
+            else
+            {
+                <div class="field-grid stock-fields sales-fields">
+                    <div class="field">
+                        <label asp-for="CustomerId">Müşteri</label>
+                        <select asp-for="CustomerId">
+                            <option value="">Aktif müşteri seçin</option>
+                            @foreach (var customer in Model.Customers)
+                            {
+                                <option value="@customer.CustomerId">@customer.CustomerCode · @customer.Title</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CustomerId" class="field-error"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="StockItemId">Ürün ve çıkış deposu</label>
+                        <select asp-for="StockItemId" id="sale-stock-item">
+                            <option value="">Stok seçin</option>
+                            @foreach (var item in Model.StockItems)
+                            {
+                                <option value="@item.StockItemId" data-quantity="@item.Quantity.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-unit="@item.Unit">@item.ProductName · @item.ProductType · @item.Warehouse · @item.Quantity.ToString("0.###") @item.Unit</option>
+                            }
+                        </select>
+                        <span asp-validation-for="StockItemId" class="field-error"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="Quantity">Satış miktarı</label>
+                        <input asp-for="Quantity" id="sale-quantity" type="number" min="0.001" step="0.001" placeholder="0" />
+                        <small class="sales-stock-hint" id="sale-stock-hint">Seçilebilir miktar: —</small>
+                        <span asp-validation-for="Quantity" class="field-error"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="UnitPrice">Birim satış fiyatı (₺)</label>
+                        <input asp-for="UnitPrice" id="sale-unit-price" type="number" min="0.0001" step="0.0001" placeholder="0,00" />
+                        <span asp-validation-for="UnitPrice" class="field-error"></span>
+                    </div>
+                    <div class="field">
+                        <label>Satış toplamı (₺)</label>
+                        <output class="sales-total-preview" id="sale-total-preview">0,00 ₺</output>
+                    </div>
+                    <div class="field">
+                        <label asp-for="ShipmentType">Sevkiyat türü</label>
+                        <select asp-for="ShipmentType">
+                            <option>Karayolu (Tır/Kamyon)</option>
+                            <option>Demiryolu (Tren)</option>
+                            <option>Denizyolu</option>
+                            <option>Havayolu</option>
+                            <option>Müşteri teslim alacak</option>
+                            <option>Diğer</option>
+                        </select>
+                        <span asp-validation-for="ShipmentType" class="field-error"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="SaleDate">Satış tarihi</label>
+                        <input asp-for="SaleDate" type="date" />
+                        <span asp-validation-for="SaleDate" class="field-error"></span>
+                    </div>
+                    <div class="field sales-note-field">
+                        <label asp-for="Note">Açıklama (isteğe bağlı)</label>
+                        <input asp-for="Note" maxlength="300" placeholder="Sipariş, irsaliye veya sevkiyat notu" />
+                        <span asp-validation-for="Note" class="field-error"></span>
+                    </div>
+                </div>
+                <p class="packaging-hint">Her kayıt bir ürün içindir. Fiyat ve toplam Türk lirası (₺) olarak tutulur. Kaydedildiğinde stok hareketlerine “Satış / sevk” çıkışı da eklenir.</p>
+                <button class="primary-button stock-save" type="submit">Satışı kaydet ve stoktan düş</button>
+            }
+        </form>
+    }
+
+    @if (Model.CanRead)
+    {
+        <h2 class="sales-history-title">Son satışlar</h2>
+        <div class="stock-table-wrap">
+            <table class="stock-table sales-table">
+                <thead><tr><th>No</th><th>Tarih</th><th>Müşteri</th><th>Ürün</th><th>Miktar</th><th>Depo</th><th>Birim fiyat</th><th>Toplam</th><th>Sevkiyat</th><th>Açıklama</th></tr></thead>
+                <tbody>
+                    @if (Model.Sales.Count == 0)
+                    {
+                        <tr><td colspan="10" class="stock-empty">Henüz satış kaydı yok.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var sale in Model.Sales)
+                        {
+                            <tr>
+                                <td>SAT-@sale.SaleId.ToString("D6")</td>
+                                <td>@sale.SaleDate.ToString("dd.MM.yyyy")</td>
+                                <td class="stock-product">@sale.CustomerTitle</td>
+                                <td>@sale.ProductName <small>(@sale.ProductType)</small></td>
+                                <td>@sale.Quantity.ToString("0.###") @sale.Unit</td>
+                                <td>@sale.Warehouse</td>
+                                <td>@sale.UnitPrice.ToString("N4") ₺</td>
+                                <td class="sales-amount">@sale.TotalAmount.ToString("N2") ₺</td>
+                                <td>@sale.ShipmentType</td>
+                                <td>@(sale.Note ?? "—")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@section Scripts {
+    <script>
+        const stockSelect = document.getElementById('sale-stock-item');
+        const quantityInput = document.getElementById('sale-quantity');
+        const priceInput = document.getElementById('sale-unit-price');
+        const stockHint = document.getElementById('sale-stock-hint');
+        const totalPreview = document.getElementById('sale-total-preview');
+        const formatCurrency = value => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value) + ' ₺';
+        function updateSalePreview() {
+            const selected = stockSelect?.selectedOptions[0];
+            if (stockHint) stockHint.textContent = selected?.dataset.quantity ? `Seçilebilir miktar: ${selected.dataset.quantity} ${selected.dataset.unit}` : 'Seçilebilir miktar: —';
+            const quantity = Number(quantityInput?.value || 0);
+            const unitPrice = Number(priceInput?.value || 0);
+            if (totalPreview) totalPreview.textContent = formatCurrency(quantity * unitPrice);
+        }
+        stockSelect?.addEventListener('change', updateSalePreview);
+        quantityInput?.addEventListener('input', updateSalePreview);
+        priceInput?.addEventListener('input', updateSalePreview);
+        updateSalePreview();
+    </script>
+}

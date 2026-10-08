@@ -1,0 +1,88 @@
+@model CustomerPageViewModel
+@{
+    ViewData["Title"] = "Müşteriler";
+}
+<section class="stock-page">
+    <div class="stock-heading">
+        <div>
+            <p class="admin-eyebrow">CARİ KAYITLAR</p>
+            <h1>Müşteriler</h1>
+            <p class="form-intro">Müşteri kartlarını oluşturun ve iletişim bilgilerini yönetin.</p>
+        </div>
+        @if (Model.CanWrite && Model.Form.CustomerId != 0)
+        {
+            <a class="stock-add-link" asp-controller="Tables" asp-action="Open" asp-route-tableName="MÜŞTERİLER">+ Yeni müşteri</a>
+        }
+    </div>
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="success-message customer-success">@success</div>
+    }
+
+    @if (Model.CanWrite)
+    {
+        <form asp-controller="Tables" asp-action="SaveCustomer" method="post" class="stock-form customer-form">
+            <input asp-for="Form.CustomerId" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            <h2 class="customer-form-title">@(Model.Form.CustomerId == 0 ? "Yeni müşteri kartı" : "Müşteri kartını düzenle")</h2>
+            <div class="field-grid stock-fields customer-fields">
+                <div class="field"><label asp-for="Form.CustomerCode"></label><input asp-for="Form.CustomerCode" maxlength="30" placeholder="Örn. MUS-0001" /><span asp-validation-for="Form.CustomerCode" class="field-error"></span></div>
+                <div class="field"><label asp-for="Form.CustomerType"></label><select asp-for="Form.CustomerType"><option>Şirket</option><option>Şahıs</option></select><span asp-validation-for="Form.CustomerType" class="field-error"></span></div>
+                <div class="field"><label asp-for="Form.Title"></label><input asp-for="Form.Title" maxlength="200" /><span asp-validation-for="Form.Title" class="field-error"></span></div>
+                <div class="field"><label asp-for="Form.ContactName"></label><input asp-for="Form.ContactName" maxlength="150" /></div>
+                <div class="field"><label asp-for="Form.TaxOffice"></label><input asp-for="Form.TaxOffice" maxlength="100" /></div>
+                <div class="field"><label asp-for="Form.TaxNumber"></label><input asp-for="Form.TaxNumber" maxlength="30" /></div>
+                <div class="field"><label asp-for="Form.Phone"></label><input asp-for="Form.Phone" maxlength="30" /></div>
+                <div class="field"><label asp-for="Form.Email"></label><input asp-for="Form.Email" type="email" maxlength="320" /><span asp-validation-for="Form.Email" class="field-error"></span></div>
+                <div class="field"><label asp-for="Form.BillingAddress"></label><textarea asp-for="Form.BillingAddress" rows="2" maxlength="500"></textarea></div>
+                <div class="field"><label asp-for="Form.DeliveryAddress"></label><textarea asp-for="Form.DeliveryAddress" rows="2" maxlength="500"></textarea></div>
+            </div>
+            <label class="toggle-row customer-active" asp-for="Form.IsActive"><span>Aktif müşteri</span><input asp-for="Form.IsActive" /></label>
+            <div class="customer-form-actions">
+                <button class="primary-button stock-save" type="submit">Müşteriyi kaydet</button>
+                @if (Model.Form.CustomerId != 0)
+                {
+                    <a class="text-link" asp-controller="Tables" asp-action="Open" asp-route-tableName="MÜŞTERİLER">İptal</a>
+                }
+            </div>
+        </form>
+    }
+
+    @if (Model.CanRead)
+    {
+        <div class="stock-table-wrap">
+            <table class="stock-table">
+                <thead><tr><th>Kod</th><th>Unvan / ad</th><th>Tür</th><th>İlgili kişi</th><th>Telefon</th><th>E-posta</th><th>Durum</th>@if (Model.CanWrite){<th>İşlem</th>}</tr></thead>
+                <tbody>
+                    @if (Model.Customers.Count == 0)
+                    {
+                        <tr><td colspan="@(Model.CanWrite ? 8 : 7)" class="stock-empty">Henüz müşteri kartı yok.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var customer in Model.Customers)
+                        {
+                            <tr>
+                                <td>@customer.CustomerCode</td><td class="stock-product">@customer.Title</td><td>@customer.CustomerType</td>
+                                <td>@(customer.ContactName ?? "—")</td><td>@(customer.Phone ?? "—")</td><td>@(customer.Email ?? "—")</td>
+                                <td><span class="warehouse-badge @(customer.IsActive ? "" : "inactive-badge")">@(customer.IsActive ? "Aktif" : "Pasif")</span></td>
+                                @if (Model.CanWrite)
+                                {
+                                    <td class="customer-row-actions">
+                                        <a class="customer-edit-link" asp-controller="Tables" asp-action="Open" asp-route-tableName="MÜŞTERİLER" asp-route-customerId="@customer.CustomerId">Düzenle</a>
+                                        <form asp-controller="Tables" asp-action="SetCustomerStatus" method="post">
+                                            <input type="hidden" name="customerId" value="@customer.CustomerId" />
+                                            <input type="hidden" name="isActive" value="@(!customer.IsActive ? "true" : "false")" />
+                                            <button class="customer-status-button @(customer.IsActive ? "deactivate" : "activate")" type="submit">@(customer.IsActive ? "Pasif yap" : "Aktif yap")</button>
+                                        </form>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

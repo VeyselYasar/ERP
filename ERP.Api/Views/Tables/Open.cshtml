@@ -1,0 +1,17 @@
+@model TableAccessViewModel
+@{
+    ViewData["Title"] = Model.TableName;
+}
+<section class="dashboard-card table-page">
+    <div class="brand-mark">E</div>
+    <p class="eyebrow">ERP TABLOSU</p>
+    <h1>@Model.TableName</h1>
+    <p>Bu sekme için kullanıcının tanımlı izinleri:</p>
+    <div class="permission-badges">
+        <span class="permission-badge @(Model.Okuma ? "granted" : "denied")">Okuma @(Model.Okuma ? "Açık" : "Kapalı")</span>
+        <span class="permission-badge @(Model.Yazma ? "granted" : "denied")">Yazma @(Model.Yazma ? "Açık" : "Kapalı")</span>
+        <span class="permission-badge @(Model.Silme ? "granted" : "denied")">Silme @(Model.Silme ? "Açık" : "Kapalı")</span>
+        <span class="permission-badge @(Model.Onizleme ? "granted" : "denied")">Önizleme @(Model.Onizleme ? "Açık" : "Kapalı")</span>
+    </div>
+    <p class="form-note">Bu kayıt, erişim menüsünü denemek için tablo kataloğunda tutuluyor; henüz gerçek bir iş verisi tablosu değil.</p>
+</section>

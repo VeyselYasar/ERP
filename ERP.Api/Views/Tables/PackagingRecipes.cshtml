@@ -1,0 +1,53 @@
+@model PackagingRecipePageViewModel
+@{
+    ViewData["Title"] = "Ambalaj Reçetesi";
+}
+<section class="stock-page">
+    <div class="stock-heading">
+        <div>
+            <p class="admin-eyebrow">ÜRÜN AMBALAJI</p>
+            <h1>Ambalaj Reçetesi</h1>
+            <p class="form-intro">Ambalaj içi miktarı ve paletteki ambalaj sayısını tanımlayın.</p>
+        </div>
+    </div>
+
+    @if (Model.CanWrite)
+    {
+        <form asp-controller="Tables" asp-action="SavePackagingRecipe" method="post" class="stock-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            <div class="field-grid stock-fields">
+                <div class="field">
+                    <label asp-for="RecipeName">Reçete adı</label><input asp-for="RecipeName" maxlength="100" placeholder="Örn. Standart koli" /><span asp-validation-for="RecipeName" class="field-error"></span>
+                </div>
+                <div class="field"><label asp-for="ProductType">Ürün cinsi</label><select asp-for="ProductType"><option>Hammadde</option><option>Mamul</option></select></div>
+                <div class="field"><label asp-for="Unit">Stok birimi</label><select asp-for="Unit"><option>Adet</option><option>Kg</option><option>Metre</option><option>Litre</option></select></div>
+                <div class="field"><label asp-for="QuantityPerPackage">Bir ambalajdaki miktar</label><input asp-for="QuantityPerPackage" type="number" min="0.001" step="0.001" placeholder="Örn. 24" /><span asp-validation-for="QuantityPerPackage" class="field-error"></span></div>
+                <div class="field"><label asp-for="PackagesPerPallet">Bir paletteki ambalaj sayısı</label><input asp-for="PackagesPerPallet" type="number" min="1" step="1" placeholder="Örn. 40" /><span asp-validation-for="PackagesPerPallet" class="field-error"></span></div>
+            </div>
+            <p class="packaging-hint">Reçeteler ürün cinsi ve stok birimine göre stok girişinde listelenir. Palet toplamı: ambalaj içi miktar × paletteki ambalaj sayısı.</p>
+            <button class="primary-button stock-save" type="submit">Reçeteyi kaydet</button>
+        </form>
+    }
+
+    @if (Model.CanRead)
+    {
+        <div class="stock-table-wrap">
+            <table class="stock-table">
+                <thead><tr><th>Reçete</th><th>Ürün cinsi</th><th>Birim</th><th>Ambalaj içi miktar</th><th>Paletteki ambalaj</th><th>Paletteki toplam</th></tr></thead>
+                <tbody>
+                    @if (Model.Recipes.Count == 0)
+                    {
+                        <tr><td colspan="6" class="stock-empty">Henüz ambalaj reçetesi yok.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var recipe in Model.Recipes)
+                        {
+                            <tr><td class="stock-product">@recipe.RecipeName</td><td>@recipe.ProductType</td><td>@recipe.Unit</td><td>@recipe.QuantityPerPackage.ToString("0.###")</td><td>@recipe.PackagesPerPallet</td><td class="stock-product">@recipe.QuantityPerPallet.ToString("0.###") @recipe.Unit</td></tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

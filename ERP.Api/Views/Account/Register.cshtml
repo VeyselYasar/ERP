@@ -1,0 +1,33 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Hesap Oluştur";
+}
+<section class="auth-layout register-layout">
+    <aside class="brand-panel">
+        <div class="brand-mark">E</div>
+        <p class="eyebrow">ERP ÇALIŞMA ALANI</p>
+        <h1>İş akışınız<br />burada başlıyor.</h1>
+        <p class="brand-copy">Şirket çalışma alanınız için hesabınızı oluşturun. ERP araçlarınıza tek bir yerden erişin.</p>
+        <div class="brand-foot"><span class="status-dot"></span> Bilgileriniz güvenle saklanır</div>
+    </aside>
+    <div class="form-panel">
+        <div class="form-wrap">
+            <p class="eyebrow mobile-eyebrow">ERP ÇALIŞMA ALANI</p>
+            <h2>Hesap oluşturun</h2>
+            <p class="form-intro">Başlamak için aşağıdaki bilgileri doldurun.</p>
+            <form asp-action="Register" method="post">
+                <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+                <div class="field-grid">
+                    <div class="field"><label asp-for="Ad"></label><input asp-for="Ad" autocomplete="given-name" placeholder="Adınız" /><span asp-validation-for="Ad" class="field-error"></span></div>
+                    <div class="field"><label asp-for="SoyAd"></label><input asp-for="SoyAd" autocomplete="family-name" placeholder="Soyadınız" /><span asp-validation-for="SoyAd" class="field-error"></span></div>
+                </div>
+                <div class="field"><label asp-for="Mail"></label><input asp-for="Mail" autocomplete="email" placeholder="ornek@sirket.com" /><span asp-validation-for="Mail" class="field-error"></span></div>
+                <div class="field"><label asp-for="Password"></label><input asp-for="Password" autocomplete="new-password" placeholder="En az 8 karakter" /><span asp-validation-for="Password" class="field-error"></span></div>
+                <div class="field"><label asp-for="ConfirmPassword"></label><input asp-for="ConfirmPassword" autocomplete="new-password" placeholder="Parolanızı tekrar yazın" /><span asp-validation-for="ConfirmPassword" class="field-error"></span></div>
+                <button class="primary-button" type="submit">Hesap oluştur <span aria-hidden="true">→</span></button>
+            </form>
+            <p class="switch-form">Zaten hesabınız var mı? <a asp-action="Login">Giriş yapın</a></p>
+            <p class="form-note">Parolanız güvenli biçimde hashlenerek saklanır.</p>
+        </div>
+    </div>
+</section>

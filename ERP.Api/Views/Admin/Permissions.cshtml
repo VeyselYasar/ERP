@@ -1,0 +1,71 @@
+@model AdminPermissionsViewModel
+@{
+    ViewData["Title"] = "Kullanıcı Yetkileri";
+}
+<section class="admin-card">
+    <div class="admin-heading">
+        <div>
+            <p class="eyebrow admin-eyebrow">ERP YÖNETİMİ</p>
+            <h1>Kullanıcı yetkileri</h1>
+            <p class="form-intro">Kullanıcı ve tablo bazında erişim izinlerini yönetin.</p>
+        </div>
+        <a class="back-link" asp-controller="Home" asp-action="Index">Çalışma alanına dön</a>
+    </div>
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="success-message" role="status">@success</div>
+    }
+    @if (TempData["Info"] is string info)
+    {
+        <div class="info-message" role="status">@info</div>
+    }
+    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+    @if (Model.Users.Count > 0)
+    {
+        <form asp-action="Permissions" method="get" class="user-picker">
+            <label for="userId">Kullanıcı seçin</label>
+            <select id="userId" name="userId" asp-items="Model.Users" onchange="this.form.submit()"></select>
+        </form>
+
+        <form asp-action="Permissions" method="post">
+            <input asp-for="SelectedUserId" type="hidden" />
+            <div class="permissions-table-wrap">
+                <table class="permissions-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Tablo</th>
+                            <th scope="col">Okuma</th>
+                            <th scope="col">Yazma</th>
+                            <th scope="col">Silme</th>
+                            <th scope="col">Önizleme</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @for (var i = 0; i < Model.Permissions.Count; i++)
+                    {
+                        <tr>
+                            <th scope="row">
+                                @Model.Permissions[i].TableName
+                                <input asp-for="Permissions[i].TableName" type="hidden" />
+                            </th>
+                            <td><label class="permission-check"><input asp-for="Permissions[i].Okuma" /><span class="visually-hidden">@Model.Permissions[i].TableName okuma</span></label></td>
+                            <td><label class="permission-check"><input asp-for="Permissions[i].Yazma" /><span class="visually-hidden">@Model.Permissions[i].TableName yazma</span></label></td>
+                            <td><label class="permission-check"><input asp-for="Permissions[i].Silme" /><span class="visually-hidden">@Model.Permissions[i].TableName silme</span></label></td>
+                            <td><label class="permission-check"><input asp-for="Permissions[i].Onizleme" /><span class="visually-hidden">@Model.Permissions[i].TableName önizleme</span></label></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            @if (Model.Permissions.Count > 0)
+            {
+                <div class="admin-actions">
+                    <p>İşaretlenmemiş izinler kapalıdır.</p>
+                    <button class="primary-button save-button" type="submit">Yetkileri kaydet <span aria-hidden="true">→</span></button>
+                </div>
+            }
+        </form>
+    }
+</section>

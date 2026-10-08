@@ -1,0 +1,62 @@
+@model ERP.Api.Models.ChangePasswordViewModel
+@{
+    ViewData["Title"] = "Ayarlar";
+}
+
+<section class="settings-card @(User.IsInRole("Admin") ? "company-settings-card" : "")">
+    <a class="back-link" asp-controller="Home" asp-action="Index">← Çalışma alanına dön</a>
+    <p class="eyebrow settings-eyebrow">HESAP</p>
+    <h1>Şifreyi değiştir</h1>
+    <p class="form-intro">Hesabınızın güvenliği için mevcut şifrenizi doğrulayın.</p>
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="success-message">@success</div>
+    }
+    <section class="remember-card" aria-labelledby="remember-heading">
+        <div>
+            <h2 id="remember-heading">Oturum tercihi</h2>
+            <p>Bu cihazda oturumunuzun hatırlanmasını seçin. Yeni girişlerde varsayılan olarak kapalıdır.</p>
+        </div>
+        <form asp-controller="Account" asp-action="UpdateRememberMe" method="post" class="remember-form">
+            <label class="toggle-row" for="rememberMe">
+                <span>Beni hatırla</span>
+                <input id="rememberMe" name="rememberMe" type="checkbox" value="true" checked="@(Model.RememberMe ? "checked" : null)" />
+                <input name="rememberMe" type="hidden" value="false" />
+            </label>
+            <button class="save-preference" type="submit">Tercihi kaydet</button>
+        </form>
+    </section>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <section class="company-profile-section">
+            <p class="settings-eyebrow">ŞİRKET BİLGİLERİ</p>
+            <h2>Şirket ve fabrika profili</h2>
+            <p class="form-intro">Kayıtlı şirket ve fabrika bilgilerini görüntüleyin veya düzenleyin.</p>
+            <a class="profile-open-link" asp-controller="Account" asp-action="CompanyProfile">Şirket / fabrika bilgilerini aç <span>→</span></a>
+        </section>
+    }
+
+    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+    <form asp-controller="Account" asp-action="Settings" method="post">
+        <div class="field">
+            <label asp-for="CurrentPassword"></label>
+            <input asp-for="CurrentPassword" autocomplete="current-password" />
+            <span asp-validation-for="CurrentPassword" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="NewPassword"></label>
+            <input asp-for="NewPassword" autocomplete="new-password" />
+            <span asp-validation-for="NewPassword" class="field-error"></span>
+            <small class="password-hint">En az 8 karakter kullanın.</small>
+        </div>
+        <div class="field">
+            <label asp-for="ConfirmPassword"></label>
+            <input asp-for="ConfirmPassword" autocomplete="new-password" />
+            <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+        </div>
+        <button class="primary-button" type="submit">Şifreyi güncelle <span>→</span></button>
+    </form>
+</section>

@@ -1,0 +1,37 @@
+@model ERP.Api.Models.CompanyProfileViewModel
+@{
+    ViewData["Title"] = Model.Exists ? "Profili düzenle" : "Profil oluştur";
+}
+
+<main class="company-profile-page company-profile-edit-page">
+    <a class="back-link" asp-controller="Account" asp-action="CompanyProfile">← Profil bilgilerine dön</a>
+    <p class="settings-eyebrow">ŞİRKET BİLGİLERİ</p>
+    <h1>@(Model.Exists ? "Şirket ve fabrika bilgilerini düzenle" : "Şirket ve fabrika profili oluştur")</h1>
+    <p class="form-intro">Bu bilgiler tek şirketiniz ve üretim tesisiniz için kullanılır.</p>
+
+    <form asp-controller="Account" asp-action="UpdateCompanyProfile" method="post">
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        <section class="profile-edit-section">
+            <h2>Şirket</h2>
+            <div class="field-grid company-fields">
+                <div class="field"><label asp-for="CompanyName"></label><input asp-for="CompanyName" maxlength="200" /><span asp-validation-for="CompanyName" class="field-error"></span></div>
+                <div class="field"><label asp-for="TaxNumber"></label><input asp-for="TaxNumber" maxlength="30" /></div>
+                <div class="field"><label asp-for="TaxOffice"></label><input asp-for="TaxOffice" maxlength="100" /></div>
+                <div class="field"><label asp-for="Phone"></label><input asp-for="Phone" maxlength="30" /></div>
+                <div class="field"><label asp-for="Email"></label><input asp-for="Email" type="email" maxlength="320" /><span asp-validation-for="Email" class="field-error"></span></div>
+                <div class="field"><label asp-for="CompanyAddress"></label><textarea asp-for="CompanyAddress" rows="2" maxlength="500"></textarea></div>
+            </div>
+        </section>
+        <section class="profile-edit-section">
+            <h2>Üretim tesisi</h2>
+            <div class="field-grid company-fields">
+                <div class="field"><label asp-for="FactoryName"></label><input asp-for="FactoryName" maxlength="200" /></div>
+                <div class="field"><label asp-for="FactoryAddress"></label><textarea asp-for="FactoryAddress" rows="2" maxlength="500"></textarea></div>
+            </div>
+        </section>
+        <div class="profile-edit-actions">
+            <a class="profile-cancel-link" asp-controller="Account" asp-action="CompanyProfile">İptal</a>
+            <button class="primary-button company-save" type="submit">Profili kaydet</button>
+        </div>
+    </form>
+</main>

@@ -1,0 +1,88 @@
+@model ProductionPageViewModel
+@{
+    ViewData["Title"] = "Üretim Kaydı";
+}
+<section class="stock-page">
+    <div class="stock-heading">
+        <div>
+            <p class="admin-eyebrow">MAMUL ÜRETİMİ</p>
+            <h1>Üretim Kaydı</h1>
+            <p class="form-intro">Üretimi kaydedin; mamul stoğu aynı işlemde güncellensin.</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <p class="transfer-message error-message">@Model.Message</p>
+    }
+
+    @if (Model.CanWrite)
+    {
+        @if (Model.Recipes.Count == 0)
+        {
+            <div class="stock-form"><p class="form-intro">Üretim kaydı için önce Ambalaj Reçetesi sekmesinde en az bir Mamul reçetesi oluşturun.</p></div>
+        }
+        else
+        {
+            <form asp-controller="Tables" asp-action="RecordProduction" method="post" class="stock-form">
+                <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+                <div class="field-grid stock-fields">
+                    <div class="field"><label asp-for="ProductName">Mamul adı</label><input asp-for="ProductName" maxlength="150" placeholder="Üretilecek mamul" /><span asp-validation-for="ProductName" class="field-error"></span></div>
+                    <div class="field">
+                        <label asp-for="PackagingRecipeId">Ambalaj reçetesi</label>
+                        <select asp-for="PackagingRecipeId" id="production-recipe">
+                            <option value="">Reçete seçin</option>
+                            @foreach (var recipe in Model.Recipes)
+                            {
+                                <option value="@recipe.Id" data-unit="@recipe.Unit">@recipe.RecipeName · @recipe.QuantityPerPallet.ToString("0.###") @recipe.Unit / palet</option>
+                            }
+                        </select>
+                        <span asp-validation-for="PackagingRecipeId" class="field-error"></span>
+                    </div>
+                    <div class="field"><label asp-for="Quantity">Üretilen miktar <span id="production-unit">(birim seçin)</span></label><input asp-for="Quantity" type="number" min="0.001" step="0.001" placeholder="Miktar" /><span asp-validation-for="Quantity" class="field-error"></span></div>
+                    <div class="field"><label asp-for="Warehouse">Mamul deposu</label><select asp-for="Warehouse"><option>Depo 1</option><option>Depo 2</option><option>Depo 3</option></select></div>
+                    <div class="field"><label asp-for="ProducedAt">Üretim tarihi ve saati</label><input asp-for="ProducedAt" type="datetime-local" /><span asp-validation-for="ProducedAt" class="field-error"></span></div>
+                    <div class="field"><label asp-for="Note">Açıklama (isteğe bağlı)</label><input asp-for="Note" maxlength="300" placeholder="Vardiya, parti veya kısa not" /><span asp-validation-for="Note" class="field-error"></span></div>
+                </div>
+                <p class="packaging-hint">Kaydedilince üretilen miktar seçilen depodaki mamul stoğuna eklenir ve Stok Hareketleri’ne “Üretim” girişi yazılır. Hammadde düşümü henüz bu kayda dahil değildir.</p>
+                <button class="primary-button stock-save" type="submit">Üretimi kaydet</button>
+            </form>
+        }
+    }
+
+    @if (Model.CanRead)
+    {
+        <div class="stock-table-wrap">
+            <table class="stock-table">
+                <thead><tr><th>Üretim tarihi</th><th>Mamul</th><th>Miktar</th><th>Depo</th><th>Ambalaj reçetesi</th><th>Kaydeden</th><th>Açıklama</th></tr></thead>
+                <tbody>
+                    @if (Model.Records.Count == 0)
+                    {
+                        <tr><td colspan="7" class="stock-empty">Henüz üretim kaydı yok.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var record in Model.Records)
+                        {
+                            <tr><td>@record.ProducedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td><td class="stock-product">@record.ProductName</td><td>@record.Quantity.ToString("0.###") @record.Unit</td><td>@record.Warehouse</td><td>@record.RecipeName</td><td>@record.ProducedBy</td><td>@(record.Note ?? "—")</td></tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+@section Scripts {
+    <script>
+        const recipeSelect = document.getElementById('production-recipe');
+        const unitLabel = document.getElementById('production-unit');
+        if (recipeSelect && unitLabel) {
+            function showUnit() {
+                const option = recipeSelect.selectedOptions[0];
+                unitLabel.textContent = option && option.dataset.unit ? `(${option.dataset.unit})` : '(birim seçin)';
+            }
+            recipeSelect.addEventListener('change', showUnit);
+            showUnit();
+        }
+    </script>
+}

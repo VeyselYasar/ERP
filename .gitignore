@@ -1,0 +1,5 @@
+/ERP.Api/appsettings.Development.json
+**/bin/
+**/obj/
+.vs/
+*.csproj.user

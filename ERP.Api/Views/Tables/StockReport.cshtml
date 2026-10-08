@@ -1,0 +1,80 @@
+@model StockReportPageViewModel
+@{
+    ViewData["Title"] = "Stok Raporu";
+}
+<section class="stock-page">
+    <div class="stock-heading">
+        <div>
+            <p class="admin-eyebrow">ENVANTER ÖZETİ</p>
+            <h1>Stok Raporu</h1>
+            <p class="form-intro">Depolardaki mevcut miktarları, düşük stokları ve dönem hareketlerini görüntüleyin.</p>
+        </div>
+    </div>
+
+    <form asp-controller="Tables" asp-action="Open" method="get" class="report-filter">
+        <input type="hidden" name="tableName" value="STOK RAPORU" />
+        <div class="field"><label for="fromDate">Hareket başlangıcı</label><input id="fromDate" name="fromDate" type="date" value="@Model.FromDate.ToString("yyyy-MM-dd")" /></div>
+        <div class="field"><label for="toDate">Hareket bitişi</label><input id="toDate" name="toDate" type="date" value="@Model.ToDate.ToString("yyyy-MM-dd")" /></div>
+        <button class="primary-button report-button" type="submit">Raporu göster</button>
+    </form>
+
+    <h2 class="report-section-title">Depo ve ürün cinsine göre mevcut stok</h2>
+    <div class="stock-table-wrap">
+        <table class="stock-table">
+            <thead><tr><th>Depo</th><th>Ürün cinsi</th><th>Ürün çeşidi</th><th>Toplam miktar</th><th>Birim</th></tr></thead>
+            <tbody>
+                @if (Model.Summary.Count == 0)
+                {
+                    <tr><td colspan="5" class="stock-empty">Stok kaydı bulunmuyor.</td></tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Summary)
+                    {
+                        <tr><td>@item.Warehouse</td><td>@item.ProductType</td><td>@item.ProductCount</td><td class="stock-product">@item.TotalQuantity.ToString("0.###")</td><td>@item.Unit</td></tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="report-section-title">Düşük stok uyarıları</h2>
+    <div class="stock-table-wrap">
+        <table class="stock-table">
+            <thead><tr><th>Ürün</th><th>Cins</th><th>Depo</th><th>Mevcut miktar</th><th>Uyarı eşiği</th></tr></thead>
+            <tbody>
+                @if (Model.LowStock.Count == 0)
+                {
+                    <tr><td colspan="5" class="stock-empty">Eşiğin altında stok yok. Eşikleri STOK sekmesinden belirleyebilirsiniz.</td></tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.LowStock)
+                    {
+                        <tr><td class="stock-product">@item.ProductName</td><td>@item.ProductType</td><td>@item.Warehouse</td><td>@item.Quantity.ToString("0.###") @item.Unit</td><td>@item.MinimumQuantity.ToString("0.###") @item.Unit</td></tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="report-section-title">Seçilen dönemdeki stok hareketleri</h2>
+    <div class="stock-table-wrap">
+        <table class="stock-table">
+            <thead><tr><th>Tarih</th><th>Ürün</th><th>Hareket</th><th>Miktar</th><th>Depo</th><th>Neden</th></tr></thead>
+            <tbody>
+                @if (Model.Movements.Count == 0)
+                {
+                    <tr><td colspan="6" class="stock-empty">Bu dönemde hareket kaydı yok.</td></tr>
+                }
+                else
+                {
+                    @foreach (var movement in Model.Movements)
+                    {
+                        <tr><td>@movement.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td><td class="stock-product">@movement.ProductName</td><td>@movement.MovementType</td><td>@movement.Quantity.ToString("0.###") @movement.Unit</td><td>@movement.Warehouse</td><td>@movement.Reason</td></tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

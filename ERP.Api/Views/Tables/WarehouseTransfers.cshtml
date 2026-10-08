@@ -1,0 +1,78 @@
+@model TransferPageViewModel
+@{
+    ViewData["Title"] = "Depo Transferi";
+}
+<section class="stock-page">
+    <div class="stock-heading">
+        <div>
+            <p class="admin-eyebrow">STOK HAREKETİ</p>
+            <h1>Depolar Arası Transfer</h1>
+            <p class="form-intro">Stok miktarını bir depodan diğerine aktarın.</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <p class="transfer-message error-message">@Model.Message</p>
+    }
+
+    @if (Model.CanWrite)
+    {
+        <form asp-controller="Tables" asp-action="CreateTransfer" method="post" class="stock-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            @if (Model.Sources.Count == 0)
+            {
+                <p class="form-intro">Transfer edilebilecek stok bulunamadı. Önce STOK sekmesinden ürün ve miktar girişi yapın.</p>
+            }
+            else
+            {
+                <div class="field-grid stock-fields">
+                    <div class="field">
+                        <label asp-for="StockItemId">Ürün ve kaynak depo</label>
+                        <select asp-for="StockItemId">
+                            <option value="">Stok seçin</option>
+                            @foreach (var source in Model.Sources)
+                            {
+                                <option value="@source.StockItemId">@source.ProductName · @source.Warehouse · @source.Quantity.ToString("0.###") @source.Unit</option>
+                            }
+                        </select>
+                        <span asp-validation-for="StockItemId" class="field-error"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="ToWarehouse">Hedef depo</label>
+                        <select asp-for="ToWarehouse"><option>Depo 1</option><option>Depo 2</option><option>Depo 3</option></select>
+                    </div>
+                    <div class="field">
+                        <label asp-for="Quantity">Transfer miktarı</label>
+                        <input asp-for="Quantity" type="number" min="0.001" step="0.001" placeholder="Miktar" />
+                        <span asp-validation-for="Quantity" class="field-error"></span>
+                    </div>
+                </div>
+                <p class="packaging-hint">Miktar, seçilen ürünün stok birimiyle aktarılır. Kaynak depoda yeterli miktar yoksa transfer kaydedilmez.</p>
+                <button class="primary-button stock-save" type="submit">Transferi kaydet</button>
+            }
+        </form>
+    }
+
+    @if (Model.CanRead)
+    {
+        <div class="stock-table-wrap">
+            <table class="stock-table">
+                <thead><tr><th>Tarih</th><th>Ürün</th><th>Cins</th><th>Miktar</th><th>Kaynak</th><th>Hedef</th><th>İşlemi yapan</th></tr></thead>
+                <tbody>
+                    @if (Model.Transfers.Count == 0)
+                    {
+                        <tr><td colspan="7" class="stock-empty">Henüz transfer kaydı yok.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var transfer in Model.Transfers)
+                        {
+                            <tr><td>@transfer.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td><td class="stock-product">@transfer.ProductName</td><td>@transfer.ProductType</td><td>@transfer.Quantity.ToString("0.###") @transfer.Unit</td><td>@transfer.FromWarehouse</td><td>@transfer.ToWarehouse</td><td>@transfer.TransferredBy</td></tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <header class="topbar">
+            <div class="topbar-left">
+                @await Component.InvokeAsync("TableTabs")
+            </div>
+            <nav aria-label="Ana menü">
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="admin-nav-link" asp-controller="Admin" asp-action="Permissions">Yetki yönetimi</a>
+                }
+                <span class="topbar-user">@User.Identity.Name</span>
+                <a class="settings-link" asp-controller="Account" asp-action="Settings" aria-label="Ayarlar" title="Ayarlar">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 2.94-.08-.02a1.7 1.7 0 0 0-1.76.62l-.05.07h-3.4l-.03-.08a1.7 1.7 0 0 0-1.43-1.13l-.09-.01-2.94-1.7.02-.08a1.7 1.7 0 0 0-.62-1.76l-.07-.05v-3.4l.08-.03a1.7 1.7 0 0 0 1.13-1.43l.01-.09 1.7-2.94.08.02a1.7 1.7 0 0 0 1.76-.62l.05-.07h3.4l.03.08a1.7 1.7 0 0 0 1.43 1.13l.09.01 2.94 1.7-.02.08a1.7 1.7 0 0 0 .62 1.76l.07.05v3.4l-.08.03A1.7 1.7 0 0 0 19.4 15Z" transform="translate(-2 -2) scale(1.16)"/></svg>
+                    <span>Ayarlar</span>
+                </a>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="topbar-logout-form">
+                    <button class="topbar-logout" type="submit">Çıkış</button>
+                </form>
+            </nav>
+        </header>
+    }
+    <main class="page-shell">
+        @RenderBody()
+    </main>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

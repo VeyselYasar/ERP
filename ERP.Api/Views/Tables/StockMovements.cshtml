@@ -1,0 +1,73 @@
+@model StockMovementPageViewModel
+@{
+    ViewData["Title"] = "Stok Hareketleri";
+}
+<section class="stock-page">
+    <div class="stock-heading">
+        <div>
+            <p class="admin-eyebrow">STOK TAKİBİ</p>
+            <h1>Stok Hareketleri</h1>
+            <p class="form-intro">Giriş ve çıkışları nedenleriyle kaydedin ve geçmişini izleyin.</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <p class="transfer-message error-message">@Model.Message</p>
+    }
+
+    @if (Model.CanWrite)
+    {
+        <form asp-controller="Tables" asp-action="RecordStockMovement" method="post" class="stock-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            @if (Model.Sources.Count == 0)
+            {
+                <p class="form-intro">Hareket kaydetmek için önce STOK sekmesinden bir stok kartı oluşturun.</p>
+            }
+            else
+            {
+                <div class="field-grid stock-fields">
+                    <div class="field">
+                        <label asp-for="StockItemId">Ürün ve depo</label>
+                        <select asp-for="StockItemId">
+                            <option value="">Stok seçin</option>
+                            @foreach (var source in Model.Sources)
+                            {
+                                <option value="@source.StockItemId">@source.ProductName · @source.Warehouse · @source.Quantity.ToString("0.###") @source.Unit</option>
+                            }
+                        </select>
+                        <span asp-validation-for="StockItemId" class="field-error"></span>
+                    </div>
+                    <div class="field"><label asp-for="MovementType">Hareket yönü</label><select asp-for="MovementType"><option>Giriş</option><option>Çıkış</option></select></div>
+                    <div class="field"><label asp-for="Quantity">Miktar</label><input asp-for="Quantity" type="number" min="0.001" step="0.001" placeholder="Miktar" /><span asp-validation-for="Quantity" class="field-error"></span></div>
+                    <div class="field"><label asp-for="Reason">Neden</label><select asp-for="Reason"><option>Satın alma</option><option>Üretim</option><option>Fire</option><option>Sayım düzeltmesi</option><option>Satış / sevk</option><option>İade</option><option>Diğer</option></select><span asp-validation-for="Reason" class="field-error"></span></div>
+                    <div class="field"><label asp-for="Note">Açıklama (isteğe bağlı)</label><input asp-for="Note" maxlength="300" placeholder="Kısa not" /><span asp-validation-for="Note" class="field-error"></span></div>
+                </div>
+                <p class="packaging-hint">Giriş stoğa eklenir; çıkış stoktan düşülür. Çıkış miktarı mevcut miktarı aşamaz. Depo transferleri ilgili modülde kaydedilir.</p>
+                <button class="primary-button stock-save" type="submit">Hareketi kaydet</button>
+            }
+        </form>
+    }
+
+    @if (Model.CanRead)
+    {
+        <div class="stock-table-wrap">
+            <table class="stock-table">
+                <thead><tr><th>Tarih</th><th>Ürün</th><th>Hareket</th><th>Miktar</th><th>Depo</th><th>Neden</th><th>Açıklama</th><th>İşlemi yapan</th></tr></thead>
+                <tbody>
+                    @if (Model.Movements.Count == 0)
+                    {
+                        <tr><td colspan="8" class="stock-empty">Henüz stok hareketi yok.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var movement in Model.Movements)
+                        {
+                            <tr><td>@movement.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td><td class="stock-product">@movement.ProductName</td><td>@movement.MovementType</td><td>@movement.Quantity.ToString("0.###") @movement.Unit</td><td>@movement.Warehouse</td><td>@movement.Reason</td><td>@(movement.Note ?? "—")</td><td>@movement.PerformedBy</td></tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

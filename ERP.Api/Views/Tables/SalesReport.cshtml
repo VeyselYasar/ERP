@@ -1,0 +1,90 @@
+@model SalesReportPageViewModel
+@{
+    ViewData["Title"] = "Satış Raporu";
+}
+
+<section class="stock-page sales-report-page">
+    <div class="stock-heading">
+        <div>
+            <p class="admin-eyebrow">SATIŞ VE SEVKİYAT</p>
+            <h1>Satış Raporu</h1>
+            <p class="form-intro">Tüm satışları görüntüleyin ve tarih, müşteri, ürün veya sevkiyat türüne göre süzün.</p>
+        </div>
+    </div>
+
+    <form asp-controller="Tables" asp-action="Open" method="get" class="report-filter sales-report-filter">
+        <input type="hidden" name="tableName" value="SATIŞ RAPORU" />
+        <div class="field">
+            <label asp-for="FromDate">Başlangıç tarihi</label>
+            <input asp-for="FromDate" type="date" />
+        </div>
+        <div class="field">
+            <label asp-for="ToDate">Bitiş tarihi</label>
+            <input asp-for="ToDate" type="date" />
+        </div>
+        <div class="field">
+            <label asp-for="CustomerId">Müşteri</label>
+            <select asp-for="CustomerId">
+                <option value="">Tüm müşteriler</option>
+                @foreach (var customer in Model.Customers)
+                {
+                    <option value="@customer.CustomerId">@customer.CustomerCode · @customer.Title</option>
+                }
+            </select>
+        </div>
+        <div class="field">
+            <label asp-for="ProductName">Ürün adı</label>
+            <input asp-for="ProductName" maxlength="150" placeholder="Ürün adında ara" />
+        </div>
+        <div class="field">
+            <label asp-for="ShipmentType">Sevkiyat türü</label>
+            <select asp-for="ShipmentType">
+                <option value="">Tüm sevkiyat türleri</option>
+                <option>Karayolu (Tır/Kamyon)</option>
+                <option>Demiryolu (Tren)</option>
+                <option>Denizyolu</option>
+                <option>Havayolu</option>
+                <option>Müşteri teslim alacak</option>
+                <option>Diğer</option>
+            </select>
+        </div>
+        <button class="primary-button report-button" type="submit">Filtrele</button>
+        <a class="sales-report-reset" asp-controller="Tables" asp-action="Open" asp-route-tableName="SATIŞ RAPORU">Filtreleri temizle</a>
+    </form>
+
+    <div class="sales-report-summary">
+        <div><span>Listelenen satış</span><strong>@Model.Sales.Count</strong></div>
+        <div><span>Filtrelenen satış toplamı</span><strong>@Model.TotalAmount.ToString("N2") ₺</strong></div>
+    </div>
+
+    <div class="stock-table-wrap">
+        <table class="stock-table sales-table">
+            <thead><tr><th>Satış no</th><th>Tarih</th><th>Müşteri</th><th>Ürün</th><th>Miktar</th><th>Depo</th><th>Birim fiyat</th><th>Toplam</th><th>Sevkiyat türü</th><th>Açıklama</th><th>Kaydı yapan</th></tr></thead>
+            <tbody>
+                @if (Model.Sales.Count == 0)
+                {
+                    <tr><td colspan="11" class="stock-empty">Bu filtrelerle eşleşen satış kaydı yok.</td></tr>
+                }
+                else
+                {
+                    @foreach (var sale in Model.Sales)
+                    {
+                        <tr>
+                            <td>SAT-@sale.SaleId.ToString("D6")</td>
+                            <td>@sale.SaleDate.ToString("dd.MM.yyyy")</td>
+                            <td class="stock-product">@sale.CustomerTitle</td>
+                            <td>@sale.ProductName <small>(@sale.ProductType)</small></td>
+                            <td>@sale.Quantity.ToString("0.###") @sale.Unit</td>
+                            <td>@sale.Warehouse</td>
+                            <td>@sale.UnitPrice.ToString("N4") ₺</td>
+                            <td class="sales-amount">@sale.TotalAmount.ToString("N2") ₺</td>
+                            <td>@sale.ShipmentType</td>
+                            <td>@(sale.Note ?? "—")</td>
+                            <td>@sale.CreatedBy</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1,0 +1,315 @@
+CREATE TABLE dbo.WhoIsAdmin
+(
+    PersenolId NVARCHAR(50) NOT NULL PRIMARY KEY,
+    Eposta     NVARCHAR(320) NOT NULL
+);
+
+---------------------------------------------------
+
+CREATE TABLE dbo.UserTable
+(
+    UserId        INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [Password]    NVARCHAR(255) NOT NULL, -- Parolanın kendisi değil, güvenli hash değeri
+    AktifPasif    BIT NOT NULL CONSTRAINT DF_UserTable_AktifPasif DEFAULT (1),
+    Ad            NVARCHAR(100) NOT NULL,
+    SoyAd         NVARCHAR(100) NOT NULL,
+    Mail          NVARCHAR(320) NOT NULL
+);
+
+---------------------------------------------------
+CREATE TABLE dbo.KullaniciYetkiTable
+(
+    UserId      INT NOT NULL,
+    TableName   NVARCHAR(128) NOT NULL,
+    Okuma       BIT NOT NULL CONSTRAINT DF_KullaniciYetkiTable_Okuma DEFAULT (0),
+    Yazma       BIT NOT NULL CONSTRAINT DF_KullaniciYetkiTable_Yazma DEFAULT (0),
+    Silme       BIT NOT NULL CONSTRAINT DF_KullaniciYetkiTable_Silme DEFAULT (0),
+    Onizleme    BIT NOT NULL CONSTRAINT DF_KullaniciYetkiTable_Onizleme DEFAULT (0),
+
+    CONSTRAINT PK_KullaniciYetkiTable
+        PRIMARY KEY (UserId, TableName),
+
+    CONSTRAINT FK_KullaniciYetkiTable_UserTable
+        FOREIGN KEY (UserId)
+        REFERENCES dbo.UserTable(UserId)
+        ON DELETE CASCADE
+);
+---------------------------------------------------
+
+INSERT INTO dbo.WhoIsAdmin (PersenolId, Eposta)
+VALUES (N'1', N'admin@example.com');
+---------------------------------------------------
+CREATE TABLE dbo.[Tables]
+(
+    TableName  NVARCHAR(128) NOT NULL PRIMARY KEY,
+    AktifPasif BIT NOT NULL DEFAULT (1)
+);
+
+INSERT INTO dbo.[Tables] (TableName)
+VALUES (N'test1'), (N'test2'), (N'test3');
+---------------------------------------------------
+CREATE TABLE dbo.StockTransfers
+(
+    StockTransferId INT IDENTITY(1,1) PRIMARY KEY,
+    ProductName NVARCHAR(150) NOT NULL,
+    ProductType NVARCHAR(30) NOT NULL,
+    Quantity DECIMAL(18,3) NOT NULL,
+    Unit NVARCHAR(20) NOT NULL,
+    FromWarehouse NVARCHAR(30) NOT NULL,
+    ToWarehouse NVARCHAR(30) NOT NULL,
+    PackagingRecipeId INT NULL,
+    TransferredByUserId INT NOT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT (SYSUTCDATETIME()),
+
+    CONSTRAINT CK_StockTransfers_Quantity
+        CHECK (Quantity > 0),
+    CONSTRAINT CK_StockTransfers_DifferentWarehouses
+        CHECK (FromWarehouse <> ToWarehouse),
+    CONSTRAINT CK_StockTransfers_FromWarehouse
+        CHECK (FromWarehouse IN (N'Depo 1', N'Depo 2', N'Depo 3')),
+    CONSTRAINT CK_StockTransfers_ToWarehouse
+        CHECK (ToWarehouse IN (N'Depo 1', N'Depo 2', N'Depo 3')),
+    CONSTRAINT FK_StockTransfers_PackagingRecipes
+        FOREIGN KEY (PackagingRecipeId)
+        REFERENCES dbo.PackagingRecipes(PackagingRecipeId),
+    CONSTRAINT FK_StockTransfers_UserTable
+        FOREIGN KEY (TransferredByUserId)
+        REFERENCES dbo.UserTable(UserId)
+);
+
+INSERT INTO dbo.[Tables] (TableName)
+SELECT N'DEPO TRANSFERİ'
+WHERE NOT EXISTS
+(
+    SELECT 1
+    FROM dbo.[Tables]
+    WHERE TableName = N'DEPO TRANSFERİ'
+);
+
+---------------------------------------------------
+CREATE TABLE dbo.StockMovements
+(
+    StockMovementId INT IDENTITY(1,1) PRIMARY KEY,
+    StockItemId INT NULL,
+    ProductName NVARCHAR(150) NOT NULL,
+    ProductType NVARCHAR(30) NOT NULL,
+    MovementType NVARCHAR(10) NOT NULL,
+    Quantity DECIMAL(18,3) NOT NULL,
+    Unit NVARCHAR(20) NOT NULL,
+    Warehouse NVARCHAR(30) NOT NULL,
+    Reason NVARCHAR(50) NOT NULL,
+    Note NVARCHAR(300) NULL,
+    PerformedByUserId INT NOT NULL,
+    RelatedTransferId INT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT (SYSUTCDATETIME()),
+
+    CONSTRAINT CK_StockMovements_Type
+        CHECK (MovementType IN (N'Giriş', N'Çıkış')),
+    CONSTRAINT CK_StockMovements_Quantity
+        CHECK (Quantity > 0),
+    CONSTRAINT CK_StockMovements_Warehouse
+        CHECK (Warehouse IN (N'Depo 1', N'Depo 2', N'Depo 3')),
+    CONSTRAINT FK_StockMovements_UserTable
+        FOREIGN KEY (PerformedByUserId)
+        REFERENCES dbo.UserTable(UserId),
+    CONSTRAINT FK_StockMovements_StockTransfers
+        FOREIGN KEY (RelatedTransferId)
+        REFERENCES dbo.StockTransfers(StockTransferId)
+);
+
+INSERT INTO dbo.[Tables] (TableName)
+SELECT N'STOK HAREKETLERİ'
+WHERE NOT EXISTS
+(
+    SELECT 1
+    FROM dbo.[Tables]
+    WHERE TableName = N'STOK HAREKETLERİ'
+);
+---------------------------------------------------
+ALTER TABLE dbo.StockItems
+ADD MinimumQuantity DECIMAL(18,3) NOT NULL
+    CONSTRAINT DF_StockItems_MinimumQuantity DEFAULT (0);
+ALTER TABLE dbo.StockItems
+ADD CONSTRAINT CK_StockItems_MinimumQuantity
+CHECK (MinimumQuantity >= 0);
+INSERT INTO dbo.[Tables] (TableName)
+SELECT N'STOK RAPORU'
+WHERE NOT EXISTS
+(
+    SELECT 1 FROM dbo.[Tables]
+    WHERE TableName = N'STOK RAPORU'
+);
+---------------------------------------------------
+CREATE TABLE dbo.CompanyProfile
+(
+    ProfileId TINYINT NOT NULL PRIMARY KEY,
+    CompanyName NVARCHAR(200) NOT NULL,
+    TaxOffice NVARCHAR(100) NULL,
+    TaxNumber NVARCHAR(30) NULL,
+    Phone NVARCHAR(30) NULL,
+    Email NVARCHAR(320) NULL,
+    CompanyAddress NVARCHAR(500) NULL,
+    FactoryName NVARCHAR(200) NULL,
+    FactoryAddress NVARCHAR(500) NULL,
+    UpdatedAt DATETIME2 NOT NULL DEFAULT (SYSUTCDATETIME()),
+    UpdatedByUserId INT NULL,
+
+    CONSTRAINT CK_CompanyProfile_SingleRow
+        CHECK (ProfileId = 1),
+    CONSTRAINT FK_CompanyProfile_UserTable
+        FOREIGN KEY (UpdatedByUserId)
+        REFERENCES dbo.UserTable(UserId)
+);
+
+
+
+---------------------------------------------------
+CREATE TABLE dbo.Customers
+(
+    CustomerId INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerCode NVARCHAR(30) NOT NULL,
+    CustomerType NVARCHAR(20) NOT NULL,
+    Title NVARCHAR(200) NOT NULL,
+    TaxOffice NVARCHAR(100) NULL,
+    TaxNumber NVARCHAR(30) NULL,
+    ContactName NVARCHAR(150) NULL,
+    Phone NVARCHAR(30) NULL,
+    Email NVARCHAR(320) NULL,
+    BillingAddress NVARCHAR(500) NULL,
+    DeliveryAddress NVARCHAR(500) NULL,
+    IsActive BIT NOT NULL DEFAULT (1),
+    CreatedAt DATETIME2 NOT NULL DEFAULT (SYSUTCDATETIME()),
+    UpdatedAt DATETIME2 NOT NULL DEFAULT (SYSUTCDATETIME()),
+    CreatedByUserId INT NOT NULL,
+    UpdatedByUserId INT NOT NULL,
+
+    CONSTRAINT UQ_Customers_CustomerCode UNIQUE (CustomerCode),
+    CONSTRAINT CK_Customers_CustomerType
+        CHECK (CustomerType IN (N'Şirket', N'Şahıs')),
+    CONSTRAINT FK_Customers_CreatedByUser
+        FOREIGN KEY (CreatedByUserId) REFERENCES dbo.UserTable(UserId),
+    CONSTRAINT FK_Customers_UpdatedByUser
+        FOREIGN KEY (UpdatedByUserId) REFERENCES dbo.UserTable(UserId)
+);
+
+INSERT INTO dbo.[Tables] (TableName)
+SELECT N'MÜŞTERİLER'
+WHERE NOT EXISTS
+(
+    SELECT 1
+    FROM dbo.[Tables]
+    WHERE TableName = N'MÜŞTERİLER'
+);
+---------------------------------------------------
+IF NOT EXISTS (
+    SELECT 1
+    FROM dbo.[Tables]
+    WHERE TableName = N'MÜŞTERİLER'
+)
+BEGIN
+    INSERT INTO dbo.[Tables] (TableName)
+    VALUES (N'MÜŞTERİLER');
+END;
+
+---------------------------------------------------
+IF DB_NAME() IN (N'master', N'model', N'msdb', N'tempdb')
+BEGIN
+    THROW 51001, N'Önce uygulamanın veritabanını seçin; sistem veritabanında çalıştırmayın.', 1;
+END;
+
+IF OBJECT_ID(N'dbo.Customers', N'U') IS NULL
+BEGIN
+    THROW 51002, N'dbo.Customers tablosu bulunamadı. Uygulama veritabanını kontrol edin.', 1;
+END;
+
+IF OBJECT_ID(N'dbo.UserTable', N'U') IS NULL
+BEGIN
+    THROW 51003, N'dbo.UserTable tablosu bulunamadı. Uygulama veritabanını kontrol edin.', 1;
+END;
+
+IF OBJECT_ID(N'dbo.[Tables]', N'U') IS NULL
+BEGIN
+    THROW 51004, N'dbo.[Tables] tablosu bulunamadı. Uygulama veritabanını kontrol edin.', 1;
+END;
+
+IF OBJECT_ID(N'dbo.Sales', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Sales
+    (
+        SaleId INT IDENTITY(1,1) NOT NULL
+            CONSTRAINT PK_Sales PRIMARY KEY,
+        CustomerId INT NOT NULL,
+        ProductName NVARCHAR(150) NOT NULL,
+        ProductType NVARCHAR(30) NOT NULL,
+        Quantity DECIMAL(18,3) NOT NULL,
+        Unit NVARCHAR(20) NOT NULL,
+        Warehouse NVARCHAR(30) NOT NULL,
+        UnitPrice DECIMAL(18,4) NOT NULL,
+        TotalAmount DECIMAL(18,2) NOT NULL,
+        ShipmentType NVARCHAR(50) NOT NULL,
+        SaleDate DATETIME2 NOT NULL,
+        Note NVARCHAR(300) NULL,
+        CreatedByUserId INT NOT NULL,
+        CreatedAt DATETIME2 NOT NULL
+            CONSTRAINT DF_Sales_CreatedAt DEFAULT (SYSUTCDATETIME()),
+
+        CONSTRAINT CK_Sales_Quantity CHECK (Quantity > 0),
+        CONSTRAINT CK_Sales_UnitPrice CHECK (UnitPrice > 0),
+        CONSTRAINT CK_Sales_TotalAmount CHECK (TotalAmount > 0),
+        CONSTRAINT CK_Sales_Unit
+            CHECK (Unit IN (N'Adet', N'Kg', N'Metre', N'Litre')),
+        CONSTRAINT CK_Sales_Warehouse
+            CHECK (Warehouse IN (N'Depo 1', N'Depo 2', N'Depo 3')),
+        CONSTRAINT CK_Sales_ShipmentType
+            CHECK (ShipmentType IN
+            (
+                N'Karayolu (Tır/Kamyon)',
+                N'Demiryolu (Tren)',
+                N'Denizyolu',
+                N'Havayolu',
+                N'Müşteri teslim alacak',
+                N'Diğer'
+            )),
+        CONSTRAINT FK_Sales_Customers
+            FOREIGN KEY (CustomerId) REFERENCES dbo.Customers(CustomerId),
+        CONSTRAINT FK_Sales_UserTable
+            FOREIGN KEY (CreatedByUserId) REFERENCES dbo.UserTable(UserId)
+    );
+END;
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM dbo.[Tables]
+    WHERE TableName = N'SATIŞ'
+)
+BEGIN
+    INSERT INTO dbo.[Tables] (TableName)
+    VALUES (N'SATIŞ');
+END;
+---------------------------------------------------
+IF DB_NAME() IN (N'master', N'model', N'msdb', N'tempdb')
+BEGIN
+    THROW 51011, N'Önce uygulamanın veritabanını seçin.', 1;
+END;
+
+IF OBJECT_ID(N'dbo.Sales', N'U') IS NULL
+BEGIN
+    THROW 51012, N'dbo.Sales tablosu bulunamadı. Uygulama veritabanını kontrol edin.', 1;
+END;
+
+IF OBJECT_ID(N'dbo.[Tables]', N'U') IS NULL
+BEGIN
+    THROW 51013, N'dbo.Tables tablosu bulunamadı. Uygulama veritabanını kontrol edin.', 1;
+END;
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM dbo.[Tables]
+    WHERE TableName = N'SATIŞ RAPORU'
+)
+BEGIN
+    INSERT INTO dbo.[Tables] (TableName)
+    VALUES (N'SATIŞ RAPORU');
+END;
